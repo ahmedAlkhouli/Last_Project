@@ -1,0 +1,44 @@
+name: Security Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Python Security Tools (Bandit & Safety)
+        run: |
+          pip install bandit safety
+
+      - name: Run Bandit (SAST Code Scan)
+        run: |
+          echo "Scanning backend Python code for security flaws..."
+          bandit -r backend/ -ll -ii
+
+      - name: Run Safety (Dependency Scan)
+        run: |
+          echo "Scanning requirements.txt for known vulnerabilities..."
+          safety check -r backend/requirements.txt --full-report
+
+      - name: Run Trivy (Docker Container Scan)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'

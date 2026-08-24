@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: course_recommendation_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  vault:
+    image: hashicorp/vault:latest
+    ports:
+      - "8200:8200"
+    environment:
+      - VAULT_DEV_ROOT_TOKEN_ID=my-secret-root-token
+      - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
+    command: server -dev
+    cap_add:
+      - IPC_LOCK
+
+  backend:
+    build: ./backend
+    environment:
+      - DATABASE_URL=postgresql://postgres:123456@db:5432/course_recommendation_db
+      - SECRET_KEY=super-secret-key-course-platform-2026-secure
+      - JWT_SECRET_KEY=jwt-super-secret-key-32-chars-long-secure-token
+      - VAULT_ADDR=http://vault:8200
+      - VAULT_TOKEN=my-secret-root-token
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+      vault:
+        condition: service_started
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
