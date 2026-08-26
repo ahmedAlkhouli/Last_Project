@@ -1,9 +1,8 @@
 FROM nginx:alpine
-
-# Copy Nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy static assets (CSS/JS)
+# Copy static assets and HTML templates
 COPY static/ /usr/share/nginx/html/static/
+COPY *.html /usr/share/nginx/html/
 
 EXPOSE 80

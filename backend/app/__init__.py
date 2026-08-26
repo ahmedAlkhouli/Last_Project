@@ -4,19 +4,16 @@ from app.db import engine
 from app.models import metadata
 
 def create_app():
-    app = Flask(__name__, template_folder="../templates", static_folder="../static")
+    app = Flask(__name__)
     app.config.from_object(Config)
 
     # Ensure tables are created
-    metadata.create_all(bind=engine)
 
     from app.routes_auth import auth_bp
     from app.routes_courses import courses_bp
-    from app.routes_frontend import frontend_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(courses_bp)
-    app.register_blueprint(frontend_bp)
 
 
     @app.errorhandler(400)

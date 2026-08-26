@@ -29,7 +29,9 @@ services:
       - IPC_LOCK
 
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     environment:
       - DATABASE_URL=postgresql://postgres:123456@db:5432/course_recommendation_db
       - SECRET_KEY=super-secret-key-course-platform-2026-secure
