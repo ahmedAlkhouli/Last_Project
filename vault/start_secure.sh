@@ -10,8 +10,7 @@ export VAULT_TOKEN
 
 # Retrieve secrets from Vault
 echo "Retrieving secrets from Vault..."
-# We use docker compose exec so you don't have to install the Vault CLI locally
-SECRETS=$(docker compose exec -T vault vault kv get -format=json $SECRET_PATH)
+SECRETS=$(docker compose exec -T vault env VAULT_ADDR="http://127.0.0.1:8200" vault kv get -format=json $SECRET_PATH)
 
 if [ $? -ne 0 ]; then
   echo "Failed to retrieve secrets from Vault."
