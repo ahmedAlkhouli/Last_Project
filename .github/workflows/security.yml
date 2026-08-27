@@ -68,7 +68,7 @@ jobs:
           docker compose up -d db
           
           # Give Vault a few seconds to fully boot
-          sleep 5
+          sleep 15
           
           # 4. Unseal Vault automatically
           UNSEAL_KEY=$(grep 'Unseal Key 1:' vault/vault_keys.txt | awk '{print $NF}')
