@@ -10,9 +10,10 @@ on:
 
 permissions:
   contents: read
+  packages: write  # Grants access to push to GHCR
 
 jobs:
-  security-scan:
+  security-scan-and-deploy:
     runs-on: self-hosted
     
     steps:
@@ -24,19 +25,14 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Python Security Tools (Bandit & Safety)
-        run: |
-          pip install bandit safety
+      - name: Install Python Security Tools
+        run: pip install bandit safety
 
       - name: Run Bandit (SAST Code Scan)
-        run: |
-          echo "Scanning backend Python code for security flaws..."
-          bandit -r backend/ -ll -ii
+        run: bandit -r backend/ -ll -ii
 
       - name: Run Safety (Dependency Scan)
-        run: |
-          echo "Scanning requirements.txt for known vulnerabilities..."
-          safety check -r backend/requirements.txt --full-report
+        run: safety check -r backend/requirements.txt --full-report
 
       - name: Run Trivy (Docker Container Scan)
         uses: aquasecurity/trivy-action@master
@@ -47,3 +43,31 @@ jobs:
           exit-code: '1'
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Backend Image
+        run: |
+          docker build -t ghcr.io/ahmedalkhouli/last_project-backend:latest -f backend/Dockerfile .
+          docker push ghcr.io/ahmedalkhouli/last_project-backend:latest
+
+      - name: Deploy Secure Architecture
+        run: |
+          # 1. Tear down the old master stack
+          docker compose down
+          
+          # 2. Ensure Vault stack and DB are running for the script
+          docker compose -f vault/docker-compose.yaml up -d
+          docker compose up -d db
+          sleep 3
+          
+          # 3. Pull the fresh GHCR image to the local machine
+          docker pull ghcr.io/ahmedalkhouli/last_project-backend:latest
+          
+          # 4. Fetch secrets and launch backend/frontend
+          ./vault/start_secure.sh
