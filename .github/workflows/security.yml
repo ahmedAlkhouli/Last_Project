@@ -10,7 +10,7 @@ on:
 
 permissions:
   contents: read
-  packages: write  # Grants access to push to GHCR
+  packages: write
 
 jobs:
   security-scan-and-deploy:
@@ -53,21 +53,17 @@ jobs:
 
       - name: Build and Push Backend Image
         run: |
-          docker build -t ghcr.io/ahmedalkhouli/last_project-backend:latest -f backend/Dockerfile .
-          docker push ghcr.io/ahmedalkhouli/last_project-backend:latest
+          docker build --push -t ghcr.io/ahmedalkhouli/last_project-backend:latest -f backend/Dockerfile .
 
+          docker push ghcr.io/ahmedalkhouli/last_project-backend:latest
       - name: Deploy Secure Architecture
         run: |
-          # 1. Tear down the old master stack
           docker compose down
           
-          # 2. Ensure Vault stack and DB are running for the script
           docker compose -f vault/docker-compose.yaml up -d
           docker compose up -d db
           sleep 3
           
-          # 3. Pull the fresh GHCR image to the local machine
           docker pull ghcr.io/ahmedalkhouli/last_project-backend:latest
           
-          # 4. Fetch secrets and launch backend/frontend
           ./vault/start_secure.sh
