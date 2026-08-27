@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15-alpine
@@ -17,39 +15,25 @@ services:
       timeout: 5s
       retries: 5
 
-  vault:
-    image: hashicorp/vault:latest
-    ports:
-      - "8200:8200"
-    environment:
-      - VAULT_DEV_ROOT_TOKEN_ID=my-secret-root-token
-      - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
-    command: server -dev
-    cap_add:
-      - IPC_LOCK
-
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    environment:
-      - DATABASE_URL=postgresql://postgres:123456@db:5432/course_recommendation_db
-      - SECRET_KEY=super-secret-key-course-platform-2026-secure
-      - JWT_SECRET_KEY=jwt-super-secret-key-32-chars-long-secure-token
-      - VAULT_ADDR=http://vault:8200
-      - VAULT_TOKEN=my-secret-root-token
+    env_file:
+      - .env
     ports:
       - "5000:5000"
     depends_on:
       db:
         condition: service_healthy
-      vault:
-        condition: service_started
 
   frontend:
-    build: ./frontend
+    image: nginx:alpine
     ports:
       - "8080:80"
+    volumes:
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./frontend:/usr/share/nginx/html:ro
     depends_on:
       - backend
 

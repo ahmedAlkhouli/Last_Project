@@ -1,0 +1,11 @@
+services:
+  vault:
+    image: hashicorp/vault:latest
+    container_name: vault-server
+    ports:
+      - "8200:8200"
+    volumes:
+      - ./config.hcl:/vault/config/config.hcl:ro
+      - ./data:/vault/file
+    # This bypasses the buggy startup script and runs the app directly
+    entrypoint: ["vault", "server", "-config=/vault/config/config.hcl"]

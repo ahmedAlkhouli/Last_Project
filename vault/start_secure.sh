@@ -1,31 +1,23 @@
 #!/bin/bash
-# Variables
 VAULT_ADDR='http://127.0.0.1:8200'
-VAULT_TOKEN='my-secret-root-token'
+VAULT_TOKEN=$(grep 'Initial Root Token:' /home/aau/Desktop/Skills_Utilization/vault/vault_keys.txt | awk '{print $NF}')
 SECRET_PATH='secret/myapp'
 ENV_FILE='/home/aau/Desktop/Skills_Utilization/.env'
 
 export VAULT_ADDR
 export VAULT_TOKEN
 
-# Retrieve secrets from Vault
 echo "Retrieving secrets from Vault..."
-SECRETS=$(docker compose exec -T vault env VAULT_ADDR="http://127.0.0.1:8200" vault kv get -format=json $SECRET_PATH)
+# Swapped to docker exec since Vault is in a separate compose file
+SECRETS=$(docker exec -i vault-server env VAULT_ADDR="http://127.0.0.1:8200" VAULT_TOKEN=$VAULT_TOKEN vault kv get -format=json $SECRET_PATH)
 
 if [ $? -ne 0 ]; then
   echo "Failed to retrieve secrets from Vault."
   exit 1
 fi
 
-# Extract data and save to .env file
 echo "Saving secrets to $ENV_FILE..."
 echo "$SECRETS" | jq -r '.data.data | to_entries[] | .key + "=" + .value' > $ENV_FILE
 
-if [ $? -ne 0 ]; then
-  echo "Failed to save secrets to $ENV_FILE."
-  exit 1
-fi
-
-# Run Docker with .env file
-echo "Running Docker container..."
+echo "Running App stack..."
 docker compose up -d backend frontend

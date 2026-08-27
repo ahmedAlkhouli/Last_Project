@@ -2,7 +2,7 @@ FROM python:3.11-slim
 RUN useradd -m appuser
 WORKDIR /app
 
-# The build context is now the project root, so we prepend directory paths
+# The build context for backend is the project root (.)
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ .
