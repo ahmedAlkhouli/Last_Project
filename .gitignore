@@ -22,3 +22,4 @@ vault/start_secure.sh
 actions-runner/
 actions-runner/
 vault/
+docker-compose.yaml
