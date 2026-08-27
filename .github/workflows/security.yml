@@ -57,22 +57,25 @@ jobs:
 
       - name: Deploy Secure Architecture
         run: |
-          # 1. Tear down the old master stack
+         # 1. Switch out of the temporary runner clone and into the REAL project directory
+          cd /home/aau/Desktop/Skills_Utilization
+          
+          # 2. Tear down the old master stack
           docker compose down
           
-          # 2. Ensure Vault stack and DB are running
+          # 3. Ensure Vault stack and DB are running
           docker compose -f vault/docker-compose.yaml up -d
           docker compose up -d db
           
           # Give Vault a few seconds to fully boot
           sleep 5
           
-          # 3. Unseal Vault automatically
-          UNSEAL_KEY=$(grep 'Unseal Key 1:' /home/aau/Desktop/Skills_Utilization/vault/vault_keys.txt | awk '{print $NF}')
+          # 4. Unseal Vault automatically
+          UNSEAL_KEY=$(grep 'Unseal Key 1:' vault/vault_keys.txt | awk '{print $NF}')
           docker exec vault-server env VAULT_ADDR="http://127.0.0.1:8200" vault operator unseal $UNSEAL_KEY
           
-          # 4. Pull the fresh GHCR image to the local machine
+          # 5. Pull the fresh GHCR image to the local machine
           docker pull ghcr.io/ahmedalkhouli/last_project-backend:latest
           
-          # 5. Fetch secrets and launch backend/frontend
+          # 6. Fetch secrets and launch backend/frontend
           ./vault/start_secure.sh
