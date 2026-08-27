@@ -67,17 +67,18 @@ jobs:
           docker compose -f vault/docker-compose.yaml up -d
           docker compose up -d db
           
-          # 4. Actively wait until Vault's port is responding (up to 30 seconds max)
-          echo "Waiting for Vault server to start responding..."
+          # 4. Get Vault's direct internal container IP and wait for it to wake up
+          echo "Waiting for Vault container to initialize..."
           for i in {1..30}; do
-            if curl -s http://127.0.0.1:8200/v1/sys/health >/dev/null 2>&1; then
-              echo "Vault is up and running!"
+            VAULT_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' vault-server 2>/dev/null || true)
+            if [ ! -z "$VAULT_IP" ] && curl -s http://$VAULT_IP:8200/v1/sys/health >/dev/null 2>&1; then
+              echo "Vault is up at IP $VAULT_IP!"
               break
             fi
             sleep 1
           done
           
-          # 5. Unseal Vault automatically
+          # 5. Unseal Vault automatically using the container IP
           UNSEAL_KEY=$(grep 'Unseal Key 1:' vault/vault_keys.txt | awk '{print $NF}')
           docker exec vault-server env VAULT_ADDR="http://127.0.0.1:8200" vault operator unseal $UNSEAL_KEY
           
