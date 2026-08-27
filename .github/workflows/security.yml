@@ -55,7 +55,6 @@ jobs:
         run: |
           docker build --push -t ghcr.io/ahmedalkhouli/last_project-backend:latest -f backend/Dockerfile .
 
-          docker push ghcr.io/ahmedalkhouli/last_project-backend:latest
       - name: Deploy Secure Architecture
         run: |
           docker compose down
