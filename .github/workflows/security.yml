@@ -67,15 +67,22 @@ jobs:
           docker compose -f vault/docker-compose.yaml up -d
           docker compose up -d db
           
-          # Give Vault a few seconds to fully boot
-          sleep 15
+          # 4. Actively wait until Vault's port is responding (up to 30 seconds max)
+          echo "Waiting for Vault server to start responding..."
+          for i in {1..30}; do
+            if curl -s http://127.0.0.1:8200/v1/sys/health >/dev/null 2>&1; then
+              echo "Vault is up and running!"
+              break
+            fi
+            sleep 1
+          done
           
-          # 4. Unseal Vault automatically
+          # 5. Unseal Vault automatically
           UNSEAL_KEY=$(grep 'Unseal Key 1:' vault/vault_keys.txt | awk '{print $NF}')
           docker exec vault-server env VAULT_ADDR="http://127.0.0.1:8200" vault operator unseal $UNSEAL_KEY
           
-          # 5. Pull the fresh GHCR image to the local machine
+          # 6. Pull the fresh GHCR image to the local machine
           docker pull ghcr.io/ahmedalkhouli/last_project-backend:latest
           
-          # 6. Fetch secrets and launch backend/frontend
+          # 7. Fetch secrets and launch backend/frontend
           ./vault/start_secure.sh
