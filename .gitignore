@@ -21,3 +21,4 @@ vault/start_secure.sh
 .db.env
 actions-runner/
 actions-runner/
+vault/
