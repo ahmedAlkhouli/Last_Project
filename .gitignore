@@ -13,3 +13,9 @@ venv/
 
 # OS Files
 .DS_Store
+
+# Local Security & Vault Files (Never push to GitHub)
+vault/data/
+vault/vault_keys.txt
+vault/start_secure.sh
+.db.env

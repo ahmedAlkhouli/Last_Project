@@ -7,5 +7,4 @@ services:
     volumes:
       - ./config.hcl:/vault/config/config.hcl:ro
       - ./data:/vault/file
-    # This bypasses the buggy startup script and runs the app directly
     entrypoint: ["vault", "server", "-config=/vault/config/config.hcl"]
