@@ -57,7 +57,7 @@ jobs:
 
       - name: Deploy Secure Architecture
         run: |
-        # 1. Switch out of the temporary runner clone and into the REAL project directory
+          # 1. Switch out of the temporary runner clone and into the REAL project directory
           cd /home/aau/Desktop/Skills_Utilization
           
           # 2. Tear down the old master stack
