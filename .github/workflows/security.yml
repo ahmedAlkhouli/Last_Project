@@ -34,16 +34,6 @@ jobs:
       - name: Run Safety (Dependency Scan)
         run: safety check -r backend/requirements.txt --full-report
 
-      - name: Run Trivy (Docker Container Scan)
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'table'
-          exit-code: '1'
-          ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
-
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -51,9 +41,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push Backend Image
+      - name: Build Backend Image (Local only for scanning)
         run: |
-          docker build --push -t ghcr.io/ahmedalkhouli/last_project-backend:latest -f backend/Dockerfile .
+          docker build -t ghcr.io/ahmedalkhouli/last_project-backend:latest -f backend/Dockerfile .
+
+      - name: Run Trivy (Docker Container Scan)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'ghcr.io/ahmedalkhouli/last_project-backend:latest'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+      - name: Push Backend Image to GHCR
+        run: |
+          docker push ghcr.io/ahmedalkhouli/last_project-backend:latest
 
       - name: Deploy Secure Architecture
         run: |
